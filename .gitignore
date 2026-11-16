@@ -1,0 +1,6 @@
+target/
+.DS_Store
+docs/opus-progress.log
+docs/opus-research-result.json
+docs/opus-review-result.json
+.vercel/
