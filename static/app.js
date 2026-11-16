@@ -13,6 +13,10 @@ const store = { available: true, corrupt: false, raw: null, errors: [] };
 let data = load();
 
 function load() {
+  store.available = true;
+  store.corrupt = false;
+  store.raw = null;
+  store.errors = [];
   let raw;
   try {
     raw = localStorage.getItem(STORAGE_KEY);
@@ -57,6 +61,13 @@ function commit(next) {
 }
 
 const clone = () => structuredClone(data);
+
+// 다른 탭이 기록을 바꾸면 이 탭의 기준 데이터를 다시 읽는다. 그러지 않으면 다음 저장이 다른 탭의 변경을 덮어쓴다.
+window.addEventListener('storage', (e) => {
+  if (e.key !== STORAGE_KEY && e.key !== null) return;
+  data = load();
+  notice('다른 탭에서 기록이 바뀌었습니다. 새로고침하면 이 화면에도 최신 기록이 보입니다.');
+});
 
 function notice(msg) {
   const el = $('#notice');
@@ -140,29 +151,40 @@ function initTasks() {
     const tn = $('[data-track-note]', art);
     if (tn && off) tn.textContent += ' — 지금 선택한 경로가 아니어서 진도에 세지 않습니다. 설정에서 바꿀 수 있습니다.';
 
-    const save = (msg) => {
+    // 바뀐 필드 하나만 최신 저장 데이터에 덮어쓴다. 다른 탭이 같은 과제의 다른 필드를 바꿨어도
+    // 이 탭의 오래된 폼 값이 그 변경을 지우지 않는다.
+    const save = (field, msg) => {
       const next = clone();
       if (note.value.length > MAX_TEXT) note.value = note.value.slice(0, MAX_TEXT);
-      next.tasks[id] = { done: done.checked, rating: rating.value, note: note.value, updatedAt: new Date().toISOString() };
-      if (commit(next)) {
-        status.textContent = msg;
-        renderWeekProgress();
-      } else {
-        // 저장 실패 시 입력을 저장된 값으로 되돌려 화면과 저장 상태가 어긋나지 않게 한다.
-        const old = data.tasks[id] ?? { done: false, rating: '', note: '' };
-        done.checked = old.done;
-        rating.value = old.rating;
-        status.textContent = '저장하지 못했습니다';
-      }
+      const value = { done: done.checked, rating: rating.value, note: note.value }[field];
+      const base = next.tasks[id] ?? { done: false, rating: '', note: '', updatedAt: '' };
+      next.tasks[id] = { ...base, [field]: value, updatedAt: new Date().toISOString() };
+      if (commit(next)) status.textContent = msg;
+      else status.textContent = '저장하지 못했습니다';
+      // 성공·실패 모두 화면을 저장된 값과 맞춘다(실패하면 입력 전 값, 성공하면 다른 탭의 최신 값 포함).
+      const cur = data.tasks[id] ?? { done: false, rating: '', note: '' };
+      done.checked = cur.done;
+      rating.value = cur.rating;
+      if (field !== 'note' && document.activeElement !== note) note.value = cur.note;
+      renderWeekProgress();
     };
-    done.addEventListener('change', () => save(done.checked ? '체크를 저장했습니다' : '체크를 해제했습니다'));
-    rating.addEventListener('change', () => save('자기평가를 저장했습니다'));
-    let timer;
+    done.addEventListener('change', () => save('done', done.checked ? '체크를 저장했습니다' : '체크를 해제했습니다'));
+    rating.addEventListener('change', () => save('rating', '자기평가를 저장했습니다'));
+    let timer = null;
+    // 입력 직후 페이지를 떠나도 메모가 남도록 대기 중인 저장을 즉시 실행한다.
+    const flush = () => {
+      if (timer === null) return;
+      clearTimeout(timer);
+      timer = null;
+      save('note', '메모를 저장했습니다');
+    };
     note.addEventListener('input', () => {
       clearTimeout(timer);
       status.textContent = '입력 중…';
-      timer = setTimeout(() => save('메모를 저장했습니다'), 600);
+      timer = setTimeout(flush, 600);
     });
+    note.addEventListener('blur', flush);
+    window.addEventListener('pagehide', flush);
   }
 }
 

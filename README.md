@@ -14,6 +14,17 @@ cargo run --release
 
 포트를 바꾸려면 `FDE_PORT=9000 cargo run --release`. 서버는 127.0.0.1에만 바인딩하며 외부 서비스를 호출하지 않습니다.
 
+## Vercel 배포
+
+**Vercel Rust runtime은 Beta입니다**(https://vercel.com/docs/functions/runtimes/rust, 2026-11-16 확인). 공식 예제 https://github.com/vercel/examples/tree/main/rust/axum 의 구성을 따릅니다.
+
+- `api/fde.rs`: Vercel 함수 진입점. `VercelLayer` + `vercel_runtime::run`으로 로컬 서버와 같은 `fde_study::router()`(`src/lib.rs`)를 실행합니다.
+- `Cargo.toml`: `vercel_runtime`(axum 기능), 함수마다 필요한 `[[bin]]`(`fde`), 로컬용 `[[bin]]`(`fde-study`, `default-run`).
+- `vercel.json`: 모든 경로를 `/api/fde`로 rewrite합니다.
+- `.vercelignore`: `target`은 릴리스 바이너리만, 그리고 `.env*`, 진도 백업 파일, 원시 로그를 제외합니다.
+- 배포 후 개인 기록은 배포 도메인의 브라우저에 따로 저장됩니다. 로컬 기록을 옮기려면 백업을 내보내 배포 사이트에서 가져오세요. 서버는 상태를 저장하지 않고 비밀값이 필요 없습니다.
+- 아직 실제 Vercel 빌드·배포로 확인하지 않았습니다(`docs/review.md`).
+
 ## 데이터 저장 위치
 
 - 학습 콘텐츠: `content/course.json`. 빌드할 때 바이너리에 포함되므로 수정 후 다시 빌드해야 합니다. 서버는 시작할 때 주차 번호, 과제 ID 중복, 참조 무결성, URL 형식을 검사하고 실패하면 시작하지 않습니다.
@@ -44,15 +55,18 @@ node tools/browser-qa.mjs <출력 폴더>    # 서버 실행 중. 헤드리스 C
 ## 구조
 
 ```text
-Cargo.toml            의존성: axum, tokio, serde, serde_json
-src/main.rs           서버, 콘텐츠 검증, 페이지 렌더링, Rust 테스트
+Cargo.toml            의존성: axum, tokio, serde, serde_json, tower, vercel_runtime
+src/lib.rs            라우터, 콘텐츠 검증, 페이지 렌더링, Rust 테스트
+src/main.rs           로컬 서버 (127.0.0.1)
+api/fde.rs            Vercel 함수 진입점 (같은 라우터 재사용)
+vercel.json           Vercel rewrite 설정
 content/course.json   12주 과정, 역량, 면접 문항, 근거 공고, 통계
 static/app.css        화면 스타일
 static/logic.js       순수 로직(검증, 진도 집계). 브라우저와 node 검사가 공유
 static/app.js         화면 동작과 localStorage 저장
 static/logic.test.mjs 로직 검사
 tools/browser-qa.mjs  브라우저 동작 확인 스크립트
-docs/                 설계, 조사, 검증, 커리큘럼, QA 기록
+docs/                 설계, 조사, 검증, 커리큘럼, QA, 리뷰 기록
 ```
 
 # fdebook

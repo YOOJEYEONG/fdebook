@@ -101,7 +101,7 @@ check('페이지 순회 중 콘솔 오류·CSP 위반 없음', consoleErrors.len
 // 2. 첫 방문: 오늘의 과제
 await viewport(1280);
 await go('/');
-check('첫 방문 오늘의 과제가 1주차 첫 과제', (await evalJs(`document.querySelector('#today h2')?.textContent`)) === '공고 원문 9건 직접 읽기');
+check('첫 방문 오늘의 과제가 1주차 첫 과제', (await evalJs(`document.querySelector('#today h2')?.textContent`)) === '공고 원문 9건(R1–R9) 직접 읽기');
 check('첫 방문 설정 안내 표시', await evalJs(`!!document.querySelector('#today .tip')`));
 
 // 3. 키보드: 건너뛰기 링크 → 본문, Tab으로 체크박스 → Space
@@ -239,6 +239,45 @@ await go('/');
 await tab(); await tab(); await tab();
 check('375px 세 번째 Tab은 상단 메뉴 첫 링크', (await evalJs(`document.activeElement.closest('nav')?.getAttribute('aria-label')`)) === '학습 메뉴');
 await shot('375-home-after');
+
+// 14. 리뷰 회귀: 메모 입력 직후(600ms 대기 전) 이동해도 저장
+await viewport(1280);
+await go('/weeks/1');
+await evalJs(`(() => { const t = document.getElementById('w1-gap-note'); t.focus(); t.value = '빠른 이동'; t.dispatchEvent(new Event('input')); })()`);
+await send('Page.navigate', { url: BASE + '/' });
+await sleep(800);
+check('메모 입력 직후 이동해도 저장', JSON.parse(await stored()).tasks['w1-gap']?.note === '빠른 이동');
+
+// 15. 리뷰 회귀: 두 탭에서 각각 체크해도 서로 덮어쓰지 않음
+await go('/weeks/2');
+const created = await (await fetch(`http://127.0.0.1:9333/json/new?${encodeURIComponent(BASE + '/weeks/1')}`, { method: 'PUT' })).json();
+const ws2 = new WebSocket(created.webSocketDebuggerUrl);
+await new Promise((r) => ws2.addEventListener('open', r, { once: true }));
+await sleep(800);
+ws2.send(JSON.stringify({ id: 1, method: 'Runtime.evaluate', params: { expression: `document.getElementById('w1-plan-done').click()` } }));
+await sleep(400);
+await evalJs(`document.getElementById('w2-questions-done').click()`);
+await sleep(300);
+const both = JSON.parse(await stored()).tasks;
+check('두 탭 체크가 모두 남음', both['w1-plan']?.done && both['w2-questions']?.done);
+check('다른 탭 변경 안내 표시', await evalJs(`!document.getElementById('notice').hidden`));
+// 같은 과제: B 탭이 자기평가를 바꾼 뒤, 오래된 폼을 가진 A 탭이 체크해도 B의 자기평가가 남아야 한다.
+await go('/weeks/3');
+ws2.send(JSON.stringify({ id: 2, method: 'Page.navigate', params: { url: BASE + '/weeks/3' } }));
+await sleep(1200);
+ws2.send(JSON.stringify({ id: 3, method: 'Runtime.evaluate', params: { expression: `(() => { const s = document.getElementById('w3-client-rating'); s.value = 'met'; s.dispatchEvent(new Event('change')); })()` } }));
+await sleep(400);
+check('A 탭 폼은 아직 오래된 자기평가', (await evalJs(`document.getElementById('w3-client-rating').value`)) === '');
+await evalJs(`document.getElementById('w3-client-done').click()`);
+await sleep(300);
+const same = JSON.parse(await stored()).tasks['w3-client'];
+check('같은 과제의 다른 탭 자기평가를 오래된 폼이 덮지 않음', same?.done === true && same?.rating === 'met', JSON.stringify(same));
+check('저장 후 A 탭 폼이 최신 자기평가로 맞춰짐', (await evalJs(`document.getElementById('w3-client-rating').value`)) === 'met');
+ws2.close();
+
+// 16. 리뷰 회귀: 과제 기록 그룹 이름이 과제별로 다름
+await go('/weeks/1');
+check('과제 기록 legend에 과제명 포함', (await evalJs(`document.querySelector('#w1-read legend').textContent`)).includes('공고 원문'));
 
 check('전체 시나리오 중 콘솔 오류 없음', consoleErrors.length === 0, consoleErrors.join(' | '));
 

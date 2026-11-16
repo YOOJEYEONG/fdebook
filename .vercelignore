@@ -1,0 +1,17 @@
+# vercel/examples rust/axum 기준: target은 릴리스 바이너리만 남긴다.
+target/**
+!target/release
+!target/x86_64-unknown-linux-gnu/release/**
+!target/aarch64-unknown-linux-gnu/release/**
+
+# 배포에 필요 없는 로컬 파일. 개인 백업·비밀값은 올리지 않는다.
+.env*
+fde-study-backup-*.json
+*.unreadable-original.txt
+fde-study-unreadable-original.txt
+.agents/
+.claude/
+.DS_Store
+docs/opus-progress.log
+docs/opus-research-result.json
+docs/opus-review-result.json

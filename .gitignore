@@ -4,3 +4,7 @@ docs/opus-progress.log
 docs/opus-research-result.json
 docs/opus-review-result.json
 .vercel/
+.env*
+fde-study-backup-*.json
+fde-study-unreadable-original.txt
+.vercel
