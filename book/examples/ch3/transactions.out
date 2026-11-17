@@ -1,0 +1,5 @@
+시작          : 재고 {'BOX-S': 5, 'TAPE': 1}, 예약 0건
+트랜잭션 없음 : 재고 {'BOX-S': 3, 'TAPE': 1}, 예약 1건 <- 실패했는데 BOX-S만 줄었다 / CHECK constraint failed: qty >= 0
+트랜잭션      : 재고 {'BOX-S': 5, 'TAPE': 1}, 예약 0건 <- 전부 되돌려졌다 / CHECK constraint failed: qty >= 0
+정상 예약     : 재고 {'BOX-S': 3, 'TAPE': 0}, 예약 2건
+중복 예약 시도: 재고 {'BOX-S': 3, 'TAPE': 0}, 예약 2건 / UNIQUE constraint failed: reservations.order_id, reservations.sku

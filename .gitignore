@@ -8,3 +8,7 @@ docs/opus-review-result.json
 fde-study-backup-*.json
 fde-study-unreadable-original.txt
 .vercel
+
+# 학습북 v2: 공식 Exact 저장소·조사 캐시와 Python 실행 부산물은 올리지 않는다(재현 명령은 docs/exact-feasibility.md)
+.cache-ext/
+__pycache__/

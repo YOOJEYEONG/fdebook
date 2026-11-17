@@ -1,0 +1,8 @@
+customer_id,name,email,phone,signup_date,plan
+C001,김하나, Hana.Kim@Example.com ,010-1234-5678,2026-03-02,basic
+C002,이두리,duri.lee@example.com,01098765432,2026/03/05,Basic
+C003,박세나,,010 2222 3333,2026-03-06,enterprise
+C001,김하나,hana.kim@example.com,010-1234-5678,2026-03-02,basic
+C004,최네오,neo.choi@example,010-4444-5555,2026-03-07,premium
+C005,,yuna@example.com,010-5555-6666,2026-03-08,basic
+C006,정여섯,six@example.com,010-6666-7777,05-03-2026,basic

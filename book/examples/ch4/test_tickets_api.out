@@ -1,0 +1,8 @@
+ok   ApiContractTest.test_create_then_read
+ok   ApiContractTest.test_invalid_body_is_problem_json
+ok   ApiContractTest.test_unknown_ticket_is_404
+ok   ValidateTest.test_accepts_minimal_valid_ticket
+ok   ValidateTest.test_rejects_wrong_type
+ok   ValidateTest.test_reports_every_problem_at_once
+ok   ValidateTest.test_subject_length_boundary
+7개 실행, 실패 0, 오류 0

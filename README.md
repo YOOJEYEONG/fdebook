@@ -1,72 +1,30 @@
-# FDE 학습 공간
-
-Forward Deployed Engineer 전환을 위한 개인 학습 페이지입니다. 12주 과정(가상 고객 A물류 사례), 역량 지도, 면접 연습 기록, 지원 현황, 공고 근거 자료를 한국어로 제공합니다. 취업을 보장하지 않으며, FDE가 일반 개발자보다 취업이 쉽다는 근거는 확인하지 못했습니다(`docs/research.md`).
-
-## 실행
-
-필요: Rust 1.85 이상(edition 2024). 이 저장소는 rustc 1.100.0으로 확인했습니다. 설치는 https://rustup.rs 를 따릅니다.
-
-```sh
-cargo run --release
-```
-
-주소: http://127.0.0.1:8787
-
-포트를 바꾸려면 `FDE_PORT=9000 cargo run --release`. 서버는 127.0.0.1에만 바인딩하며 외부 서비스를 호출하지 않습니다.
-
-## Vercel 배포
-
-**Vercel Rust runtime은 Beta입니다**(https://vercel.com/docs/functions/runtimes/rust, 2026-11-16 확인). 공식 예제 https://github.com/vercel/examples/tree/main/rust/axum 의 구성을 따릅니다.
-
-- `api/fde.rs`: Vercel 함수 진입점. `VercelLayer` + `vercel_runtime::run`으로 로컬 서버와 같은 `fde_study::router()`(`src/lib.rs`)를 실행합니다.
-- `Cargo.toml`: `vercel_runtime`(axum 기능), 함수마다 필요한 `[[bin]]`(`fde`), 로컬용 `[[bin]]`(`fde-study`, `default-run`).
-- `vercel.json`: 모든 경로를 `/api/fde`로 rewrite합니다.
-- `.vercelignore`: `target`은 릴리스 바이너리만, 그리고 `.env*`, 진도 백업 파일, 원시 로그를 제외합니다.
-- 배포 후 개인 기록은 배포 도메인의 브라우저에 따로 저장됩니다. 로컬 기록을 옮기려면 백업을 내보내 배포 사이트에서 가져오세요. 서버는 상태를 저장하지 않고 비밀값이 필요 없습니다.
-- 아직 실제 Vercel 빌드·배포로 확인하지 않았습니다(`docs/review.md`).
-
-## 데이터 저장 위치
-
-- 학습 콘텐츠: `content/course.json`. 빌드할 때 바이너리에 포함되므로 수정 후 다시 빌드해야 합니다. 서버는 시작할 때 주차 번호, 과제 ID 중복, 참조 무결성, URL 형식을 검사하고 실패하면 시작하지 않습니다.
-- 개인 기록(진도 체크, 자기평가, 메모, 면접 기록, 지원 기록, 설정): 브라우저 localStorage의 `fde-study:v1` 키. 서버에는 저장하지 않습니다.
-- 브라우저 저장소는 주소(origin)별로 따로입니다. `127.0.0.1:8787`과 `localhost:8787`은 서로 다른 저장 공간이므로 한 주소만 쓰세요.
-
-## 백업
-
-설정·백업 화면에서 진행합니다.
-
-- 내보내기: "백업 파일 내보내기" 버튼을 누르면 `fde-study-backup-YYYY-MM-DD.json` 파일이 받아집니다.
-- 가져오기: 파일을 고르면 앱 식별자, 백업 버전(1), 모든 필드 형식, 과제·면접 유형 ID, URL 형식을 검사합니다. 검사를 통과해야 "가져온 내용으로 바꾸기" 버튼이 나타나고, 실패하면 이유를 보여 주고 기존 데이터는 그대로 둡니다.
-- 저장된 기록이 손상되어 읽을 수 없으면 경고를 띄우고 저장을 멈춥니다. 원본을 내려받은 뒤 초기화하거나 백업을 가져와 복구합니다.
-
-## 검사
-
-```sh
-cargo fmt --check
-cargo check
-cargo clippy --all-targets -- -D warnings
-cargo test                              # 콘텐츠 검증, HTML 이스케이프, 안전한 링크
-node --test static/logic.test.mjs       # 진도 집계, 백업 검증, 잘못된 입력 거부
-node tools/browser-qa.mjs <출력 폴더>    # 서버 실행 중. 헤드리스 Chrome으로 실제 화면 확인
-```
-
-`tools/browser-qa.mjs`는 macOS의 `/Applications/Google Chrome.app`과 Node 22 이상(내장 WebSocket)을 사용합니다. 임시 프로필을 쓰므로 평소 브라우저의 기록은 건드리지 않습니다. 결과와 스크린샷은 출력 폴더에 남습니다.
-
-## 구조
-
-```text
-Cargo.toml            의존성: axum, tokio, serde, serde_json, tower, vercel_runtime
-src/lib.rs            라우터, 콘텐츠 검증, 페이지 렌더링, Rust 테스트
-src/main.rs           로컬 서버 (127.0.0.1)
-api/fde.rs            Vercel 함수 진입점 (같은 라우터 재사용)
-vercel.json           Vercel rewrite 설정
-content/course.json   12주 과정, 역량, 면접 문항, 근거 공고, 통계
-static/app.css        화면 스타일
-static/logic.js       순수 로직(검증, 진도 집계). 브라우저와 node 검사가 공유
-static/app.js         화면 동작과 localStorage 저장
-static/logic.test.mjs 로직 검사
-tools/browser-qa.mjs  브라우저 동작 확인 스크립트
-docs/                 설계, 조사, 검증, 커리큘럼, QA, 리뷰 기록
-```
-
 # fdebook
+
+Forward Deployed Engineer에게 필요한 기술을 페이지 안에서 배우는 한국어 교재 **FDE 기술 학습북**(8장 36절)입니다. [Expo Exact](https://github.com/expo/exact)로 만든 정적 웹사이트이며 소스는 `book/`에 있습니다. 취업을 보장하지 않습니다.
+
+## 학습북
+
+- 빌드·검사·구조: `book/README.md`
+- Exact 고정 커밋(`de212e671a69f4fea18bed67d5b73b259ddf3061`)과 재현 근거: `docs/exact-feasibility.md`
+- 배포(Vercel Git 빌드): `docs/book-v2-deployment.md`
+
+```sh
+export PATH=~/.bun-1.4.2/bin:$PATH EXACT_FEEDBACK=0
+cd book
+bun run build                         # dist/에 정적 사이트
+bun exact.mjs serve dist --port 8770  # http://127.0.0.1:8770/
+```
+
+## 배포 요약
+
+`main`에 푸시하면 Vercel Git 빌드가 `vercel.json`의 `bash book/tools/vercel-build.sh`를 실행합니다. 이 스크립트는 Bun 1.4.2, Exact 고정 커밋, Exact 공식 `setup --platform web`(Rust·wasm 도구)을 준비하고 `book`을 빌드한 뒤 `book/tools/vercel-output.ts`로 `dist/`만 `.vercel/output`(Build Output API v3)에 둡니다. 소스·예제·문서·캐시·환경 파일은 배포되지 않습니다.
+
+## 이전 학습 앱(Rust, 배포 안 함)
+
+12주 과정·면접 기록·지원 현황을 다루던 개인 학습 앱의 소스는 그대로 둡니다(`Cargo.toml`, `src/`, `api/fde.rs`, `content/course.json`, `static/`, `tools/browser-qa.mjs`). `.vercelignore`로 Vercel 업로드에서 빠지므로 더 이상 배포되지 않고, 로컬에서 실행합니다.
+
+```sh
+cargo run --release   # http://127.0.0.1:8787 (Rust 1.85 이상)
+```
+
+개인 기록은 브라우저 localStorage(`fde-study:v1`)에만 있고 서버·저장소에 올라가지 않습니다. 백업 파일(`fde-study-backup-*.json`)은 `.gitignore`·`.vercelignore`로 제외됩니다. 설계·조사·검증 기록은 `docs/`에 있습니다.

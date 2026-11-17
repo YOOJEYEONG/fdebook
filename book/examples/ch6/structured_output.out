@@ -1,0 +1,8 @@
+T-1 -> {'result': {'category': '배송', 'urgency': 'high', 'summary': '주문 A-1 배송 3일 지연'}, 'attempts': 1}
+  T-2 시도 1 실패: ['JSON 아님: Expecting value']
+T-2 -> {'result': {'category': '환불', 'urgency': 'low', 'summary': '환불 일정 문의'}, 'attempts': 2}
+  T-3 시도 1 실패: ["category='결제'는 ['배송', '환불', '계정', '기타'] 중 하나여야 함", "urgency='urgent'는 ['low', 'high'] 중 하나여야 함"]
+  T-3 시도 2 실패: ["urgency='urgent'는 ['low', 'high'] 중 하나여야 함"]
+T-3 -> {'result': None, 'route': '사람 검토 대기열', 'attempts': 2}
+  T-4 시도 1 실패: ['stop_reason=max_tokens']
+T-4 -> {'result': {'category': '계정', 'urgency': 'high', 'summary': '로그인 반복 실패'}, 'attempts': 2}

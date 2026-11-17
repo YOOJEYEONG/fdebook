@@ -1,0 +1,4 @@
+  단계 1: cancel_order({'order_id': 'A-1'}) -> 오류: 알 수 없는 도구: cancel_order
+  단계 1: get_order_status({'order_id': '1'}) -> 오류: order_id는 A-숫자 형식이어야 합니다
+  단계 2: get_order_status({'order_id': 'A-1'}) -> {"status": "배송 중", "eta": "2026-11-19"}
+답(3단계): 주문 A-1은 현재 배송 중이며 2026-11-19 도착 예정입니다.

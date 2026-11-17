@@ -1,0 +1,275 @@
+// FDE 기술 학습북: a Korean textbook as a website. Every page is made at build (`render=build`): the
+// book is the site's own (content/ → tools/gen-book.ts → book.gen.ts, served by app.ts), so a static
+// host serves it whole. `/` is the cover and table of contents; `/read/:id` is one section, listed
+// for the build by `sectionIds()`. A wide window shows the table of contents beside the text; a phone
+// shows it behind the header's 목차 button. Each section's blocks are one `text` each (recipes/long-text):
+// Markdown prose, headings with an `id` for the outline's `#` links, code with a copy button and its
+// expected output, and questions whose answer opens on request.
+routes nav
+  home "/" render=build
+  read "/read/:id" render=build pages=sectionIds()
+  notfound render=build
+
+shape Block
+  id: number
+  seq: number
+  kind: string
+  text: string
+  anchor: string
+  lang: string
+  file: string
+  run: string
+  output: string
+  answer: string
+  verified: bool
+
+shape Heading
+  id: string
+  title: string
+
+shape SectionRef
+  id: string
+  number: string
+  title: string
+  summary: string
+
+shape Chapter
+  number: number
+  title: string
+  intro: string
+  sections: SectionRef[]
+
+shape Section
+  id: string
+  number: string
+  title: string
+  chapter: number
+  chapterTitle: string
+  summary: string
+  blocks: Block[]
+  outline: Heading[]
+  prevId: string
+  prevTitle: string
+  nextId: string
+  nextTitle: string
+  position: number
+  total: number
+
+shape Viewport
+  width: number
+
+style Prose
+  font-size="1.0625rem" line-height=1.8 overflow-wrap="break-word"
+
+style Mono
+  font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="0.875rem" line-height=1.6 white-space="pre"
+
+style Box
+  border="1px solid -exact-separator" border-radius=10
+
+fn sectionCount(chapters: Chapter[]): number = sum(chapters.map(c => c.sections.length))
+fn firstSection(chapters: Chapter[]): string = match first(chapters.filter(c => c.sections.length > 0)) { case some(c) => match first(c.sections) { case some(s) => s.id, case none => "" }, case none => "" }
+
+component App
+  resource toc = loadToc() as shape Chapter[] else empty()
+  resource viewport = exactViewport() as shape Viewport
+  derive selected = match stack(nav).filter(e => e.name == "read").at(-1) { case some(e) => e.params.id, case none => "" }
+  resource section = loadSection(selected) as shape Section else empty()
+  state tocOpen = false
+
+  // A link's location; the browser's Back, Forward and a deep link arrive here too. A followed link
+  // closes the phone's table of contents.
+  action follow(url: string)
+    nav = go(nav, url)
+    tocOpen = false
+  action toggleToc
+    tocOpen = not tocOpen
+
+  view
+    view navigationKey=`${top(nav).id}` navigate=follow testId="app" width="100%" height="100%"
+      head description="Forward Deployed Engineer에게 필요한 기술을 본문·실행 예제·해설로 배우는 한국어 학습북."
+      for e in stack(nav) key=e.id
+        if e.name == "home"
+          column navigationKey=`${e.id}` navigationScroll="home-page" position="absolute" inset=0
+            display="flex" flex-direction="column"
+            SiteHeader(wide=true, tocOpen=false, toggle=toggleToc)
+            scroll document id="home-page" flex=1 min-height=0
+              main id="content" display="flex" flex-direction="column" gap=20 padding="24px 16px" max-width="46rem" margin-left="auto"
+                margin-right="auto" lang="ko"
+                head title="FDE 기술 학습북"
+                text "FDE 기술 학습북" role="heading" aria-level=1 font-size="2rem" font-weight=700 testId="cover-title"
+                text "고객 현장에 배치되어 문제를 찾고, 시스템을 잇고, 운영까지 책임지는 엔지니어(Forward Deployed Engineer)에게 필요한 기술을 이 페이지 안에서 배우는 교재입니다. 각 절은 개념 설명, 직접 실행하는 예제와 예상 출력, 흔한 오류, 해설이 있는 문제로 이루어져 있습니다." class=Prose
+                section aria-labelledby="learn-h" display="flex" flex-direction="column" gap=8
+                  text "무엇을 배우나" role="heading" aria-level=2 id="learn-h" font-size="1.375rem" font-weight=700
+                  text "- 고객의 현상을 문제·성공 지표·수용 기준으로 바꾸기\n- HTTP API 통합: 상태 코드, 인증, 페이지네이션, 재시도와 백오프, 멱등성, 웹훅 서명\n- SQL과 데이터 품질: 조인, 트랜잭션, 정제, 증분 적재, 개인정보 최소화\n- 전달과 운영: 인터페이스 계약, 테스트, 설정과 비밀값, 컨테이너와 CI/CD, 관측성, 장애 대응, 권한 검사\n- AI FDE: 구조화 출력, 도구 호출, 검색 기반 생성(RAG), 평가 지표, 프롬프트 인젝션 방어, 비용과 지연\n- 고객 커뮤니케이션: 기술 설명, 아키텍처 결정 기록, 인수인계" markup="markdown" class=Prose
+                section aria-labelledby="prereq-h" display="flex" flex-direction="column" gap=8
+                  text "시작하기 전에" role="heading" aria-level=2 id="prereq-h" font-size="1.375rem" font-weight=700
+                  text "프로그래밍 기초(변수, 함수, 반복문, 딕셔너리)를 아는 개발자를 독자로 가정합니다. FDE 업무, 데이터 통합, AI 운영은 처음이어도 됩니다. 예제는 **Python 3 표준 라이브러리만** 쓰므로 설치할 패키지도, 외부 계정이나 유료 API도 필요 없습니다. 저장소의 `book/` 폴더에서 `python3 examples/…` 명령으로 실행합니다. 모든 예제는 이 책을 빌드하기 전에 실제로 실행해 출력과 대조했습니다." markup="markdown" class=Prose
+                if firstSection(toc) != ""
+                  link href=path("read", firstSection(toc)) testId="start"
+                    text "1장부터 읽기" font-weight=600
+                section aria-labelledby="toc-h" display="flex" flex-direction="column" gap=16
+                  text `전체 목차 (${toc.length}장 ${sectionCount(toc)}절)` role="heading" aria-level=2 id="toc-h" font-size="1.375rem" font-weight=700
+                  for c in toc key=c.number
+                    column gap=6 testId=`chapter-${c.number}`
+                      text `${c.number}장. ${c.title}` role="heading" aria-level=3 font-size="1.1875rem" font-weight=700
+                      text c.intro color="-exact-secondary-label" class=Prose
+                      column
+                        for s in c.sections key=s.id
+                          link href=path("read", s.id) testId=`toc-${s.id}`
+                            column gap=2 padding="6px 0"
+                              text `${s.number} ${s.title}` font-weight=600 overflow-wrap="break-word"
+                              text s.summary color="-exact-secondary-label" font-size="0.9375rem" overflow-wrap="break-word"
+              SiteFooter()
+        if e.name == "read"
+          column navigationKey=`${e.id}` navigationScroll="read-page" position="absolute" inset=0
+            display="flex" flex-direction="column"
+            SiteHeader(wide=viewport.width >= 1000, tocOpen=tocOpen, toggle=toggleToc)
+            scroll document id="read-page" flex=1 min-height=0
+              if section.id == ""
+                main padding=16 lang="ko"
+                  head title="없는 절" status=404
+                  text "이 주소의 절을 찾지 못했습니다." role="heading" aria-level=1 font-size="1.5rem" font-weight=700
+                  link href="/" testId="missing-home"
+                    text "목차로 가기"
+              else
+                head title=`${section.number} ${section.title} | FDE 기술 학습북` description=section.summary
+                if viewport.width < 1000 and tocOpen
+                  nav aria-label="목차" id="toc-panel" padding=16 border-bottom="1px solid -exact-separator" testId="toc-panel"
+                    Toc(chapters=toc, current=section.id)
+                row align-items="flex-start" gap=32 padding="24px 16px" max-width="76rem" margin-left="auto" margin-right="auto"
+                  // Always in the page, shown by width: the build's HTML is the same at every width, so the
+                  // browser adopts it as it is, and only the display changes.
+                  nav aria-label="목차" width="17rem" flex-shrink=0 position="sticky" top=16 testId="toc-side"
+                    display=(viewport.width >= 1000 ? "block" : "none")
+                    Toc(chapters=toc, current=section.id)
+                  main id="content" flex="1 1 0" min-width=0 max-width="46rem" display="flex" flex-direction="column" gap=16 lang="ko"
+                    text `${section.chapter}장 · ${section.chapterTitle}` color="-exact-secondary-label" font-size="0.9375rem"
+                    text `${section.number} ${section.title}` role="heading" aria-level=1 font-size="1.875rem" font-weight=700 testId="section-title"
+                    text `전체 ${section.total}절 중 ${section.position}번째` color="-exact-secondary-label" font-size="0.875rem" testId="position"
+                    nav aria-label="이 절의 내용" class=Box padding="12px 16px" display="flex" flex-direction="column" gap=4
+                      text "이 절의 내용" font-weight=700 font-size="0.9375rem"
+                      for h in section.outline key=h.id
+                        link href=`#${h.id}` testId=`outline-${h.id}` min-height=24 display="flex" align-items="center"
+                          text h.title font-size="0.9375rem"
+                    for b in section.blocks key=b.id
+                      if b.kind == "h2"
+                        text b.text role="heading" aria-level=2 id=b.anchor font-size="1.4375rem" font-weight=700 margin-top=16
+                      else if b.kind == "h3"
+                        text b.text role="heading" aria-level=3 id=b.anchor font-size="1.1875rem" font-weight=700
+                      else if b.kind == "code"
+                        CodeBlock(block=b)
+                      else if b.kind == "quiz"
+                        Quiz(block=b)
+                      else
+                        text b.text markup="markdown" class=Prose
+                    nav aria-label="이전 절과 다음 절" display="flex" flex-wrap="wrap" gap=12 margin-top=24
+                      if section.prevId != ""
+                        link href=path("read", section.prevId) flex="1 1 14rem" testId="prev"
+                          column class=Box padding=12 gap=2
+                            text "이전" font-size="0.875rem" color="-exact-secondary-label"
+                            text section.prevTitle font-weight=600
+                      if section.nextId != ""
+                        link href=path("read", section.nextId) flex="1 1 14rem" testId="next"
+                          column class=Box padding=12 gap=2 align-items="flex-end"
+                            text "다음" font-size="0.875rem" color="-exact-secondary-label"
+                            text section.nextTitle font-weight=600 text-align="end"
+              SiteFooter()
+        if e.name == "notfound"
+          column navigationKey=`${e.id}` navigationScroll="missing-page" position="absolute" inset=0
+            display="flex" flex-direction="column"
+            SiteHeader(wide=true, tocOpen=false, toggle=toggleToc)
+            scroll document id="missing-page" flex=1 min-height=0
+              head title="없는 페이지"
+              main padding=16 lang="ko"
+                text "없는 페이지입니다." role="heading" aria-level=1 font-size="1.5rem" font-weight=700
+                link href="/" testId="notfound-home"
+                  text "목차로 가기"
+              SiteFooter()
+
+// The header on every page: the book's name, which goes home, and on a phone the 목차 button that
+// opens the table of contents above the text.
+component SiteHeader
+  props
+    wide: bool
+    tocOpen: bool
+    toggle: action
+  view
+    header appearance="none" padding="10px 16px" border-bottom="1px solid -exact-separator"
+      row align-items="center" gap=16 max-width="76rem" margin-left="auto" margin-right="auto"
+        link href="#content" testId="skip"
+          text "본문으로" font-size="0.875rem"
+        link href="/" testId="home"
+          text "FDE 기술 학습북" font-weight=700 font-size="1.0625rem"
+        view flex=1
+        button press=toggle aria-expanded=tocOpen aria-controls="toc-panel" testId="toc-toggle"
+          display=(wide ? "none" : "flex")
+          text tocOpen ? "목차 닫기" : "목차"
+
+// Every chapter and its sections; the section shown is `aria-current="page"`.
+component Toc
+  props
+    chapters: Chapter[]
+    current: string
+  view
+    column gap=14
+      for c in chapters key=c.number
+        column gap=4
+          text `${c.number}장. ${c.title}` font-weight=700 font-size="0.9375rem"
+          column
+            for s in c.sections key=s.id
+              link href=path("read", s.id) aria-current=(s.id == current ? "page" : "false") testId=`nav-${s.id}` min-height=24
+                text `${s.number} ${s.title}` font-size="0.9375rem" padding="3px 0" font-weight=(s.id == current ? 700 : 400)
+
+// A code block: its language, a copy button, the code (scrolling sideways inside its own box), and for a
+// runnable example the command, the output it printed when the book was built, and whether that matched.
+component CodeBlock
+  props
+    block: Block
+  state copied = false
+  action copy
+    copyText(block.text)
+    copied = true
+  view
+    column class=Box overflow="hidden"
+      row align-items="center" gap=8 padding="6px 8px 6px 12px" background-color="-exact-secondary-background"
+        text (block.file != "" ? block.file : block.lang) font-size="0.8125rem" color="-exact-secondary-label" flex=1 min-width=0
+          overflow-wrap="break-word"
+        button press=copy aria-label=(copied ? "복사됨" : "코드 복사") testId=`copy-${block.id}`
+          text copied ? "복사됨" : "복사"
+      view overflow-x="auto" testId=`code-${block.id}`
+        text block.text class=Mono padding=12 min-width="max-content"
+      if block.run != ""
+        column gap=6 padding=12 border-top="1px solid -exact-separator"
+          row flex-wrap="wrap" gap=6 align-items="baseline"
+            text "실행" font-weight=700 font-size="0.875rem"
+            text block.run class=Mono overflow-wrap="break-word" white-space="pre-wrap"
+          text "출력" font-weight=700 font-size="0.875rem"
+          view overflow-x="auto" background-color="-exact-secondary-background" border-radius=6
+            text block.output class=Mono padding=10 min-width="max-content" testId=`output-${block.id}`
+          text (block.verified ? "빌드 전 tools/run-examples.ts로 실행해 이 출력과 일치함을 확인했습니다." : "이 예제는 실행 검증 기록이 없습니다.")
+            font-size="0.8125rem" color="-exact-secondary-label"
+
+// A question: its answer stays closed until the reader asks for it.
+component Quiz
+  props
+    block: Block
+  state open = false
+  action toggle
+    open = not open
+  view
+    section aria-label=`문제 ${block.seq}` class=Box padding=16 display="flex" flex-direction="column" gap=10
+      text `문제 ${block.seq}` font-weight=700 font-size="0.9375rem" color="-exact-secondary-label"
+      text block.text markup="markdown" class=Prose
+      row
+        button press=toggle aria-expanded=open aria-controls=`answer-${block.id}` testId=`answer-toggle-${block.id}`
+          text open ? "해설 닫기" : "해설 보기"
+      if open
+        column id=`answer-${block.id}` gap=6 padding-top=10 border-top="1px solid -exact-separator" testId=`answer-${block.id}`
+          text "해설" font-weight=700 font-size="0.9375rem"
+          text block.answer markup="markdown" class=Prose
+
+component SiteFooter
+  view
+    footer padding=16 max-width="46rem" margin-left="auto" margin-right="auto"
+      text "FDE 기술 학습북 · 예제는 Python 3 표준 라이브러리로 실행 · 출처와 접근일은 각 절 끝에 있습니다." font-size="0.8125rem" color="-exact-secondary-label"

@@ -1,0 +1,5 @@
+설정: Settings(app_env='staging', database_url='sqlite:///tmp/tickets.db', request_timeout_s=5.0, api_token=Secret(***))
+토큰 길이만 확인: 24
+시작 거부: 필수 설정 없음: DATABASE_URL, API_TOKEN
+시작 거부: APP_ENV는 dev/staging/prod 중 하나여야 합니다: 'production'
+시작 거부: REQUEST_TIMEOUT_S는 숫자여야 합니다

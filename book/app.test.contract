@@ -1,0 +1,116 @@
+// The book's reading flows: the cover's table of contents, a section by its own URL, previous and next,
+// a question's answer, a code block's copy button, the phone's table of contents and paths that match nothing.
+// Block ids (answer-toggle-21, copy-17) are the generated ids of content/01-01 and content/02-01.
+
+test "the cover lists every chapter and opens a section"
+  clock data
+  expect text "cover-title" == "FDE 기술 학습북"
+  expect tree has "chapter-1"
+  expect tree has "chapter-8"
+  expect tree has "toc-capstone-evaluate"
+  tap "start"
+  clock settle
+  expect text "section-title" == "1.1 FDE는 무엇을 하는가"
+  expect text "position" == "전체 36절 중 1번째"
+
+test "a section opens at its own URL, and next and previous walk the book"
+  at "/read/http-request-response"
+  clock data
+  expect text "section-title" == "2.1 요청과 응답, 그리고 JSON"
+  tap "next"
+  clock settle
+  expect text "section-title" == "2.2 상태 코드, 오류 본문, 인증과 권한"
+  tap "prev"
+  clock settle
+  expect text "section-title" == "2.1 요청과 응답, 그리고 JSON"
+  tap "prev"
+  clock settle
+  expect text "section-title" == "1.4 PoC와 운영 제품의 차이"
+
+test "the first section has no previous"
+  at "/read/fde-role"
+  clock data
+  expect tree missing "prev"
+  expect tree has "next"
+
+test "the last section has no next"
+  at "/read/capstone-evaluate"
+  clock data
+  expect text "section-title" == "8.3 종합 예제 평가와 보고"
+  expect tree missing "next"
+  expect tree has "prev"
+
+test "an answer stays closed until asked for"
+  at "/read/fde-role"
+  clock data
+  expect tree missing "answer-21"
+  tap "answer-toggle-21"
+  clock settle
+  expect tree has "answer-21"
+  tap "answer-toggle-21"
+  clock settle
+  expect tree missing "answer-21"
+
+test "a code block copies its code and shows the output it printed"
+  at "/read/http-request-response"
+  clock data
+  expect text "copy-17" == "복사"
+  tap "copy-17"
+  clock settle
+  expect text "copy-17" == "복사됨"
+  expect tree has "output-17"
+
+test "a phone opens the table of contents from the header and a link closes it"
+  size 375x812
+  at "/read/http-request-response"
+  clock data
+  // The side table of contents stays in the page with display none below 1000 px (screenshots check
+  // what shows); the phone's panel is only in the tree while open.
+  expect state viewport.width <= 999
+  expect tree missing "toc-panel"
+  tap "toc-toggle"
+  clock settle
+  expect tree has "toc-panel"
+  tap "nav-webhooks"
+  clock settle
+  expect text "section-title" == "2.6 웹훅과 서명 검증"
+  expect tree missing "toc-panel"
+
+test "a wide window shows the table of contents beside the text"
+  size 1280x900
+  at "/read/webhooks"
+  clock data
+  expect state viewport.width >= 1000
+  expect tree has "toc-side"
+  expect tree missing "toc-panel"
+
+test "a section id that does not exist says so, with a way home"
+  at "/read/no-such-section"
+  clock data
+  expect tree has "missing-home"
+  tap "missing-home"
+  clock settle
+  expect tree has "cover-title"
+
+test "a path no route matches is the not-found page"
+  at "/no/such/page"
+  clock data
+  expect tree has "notfound-home"
+  tap "notfound-home"
+  clock settle
+  expect tree has "cover-title"
+
+test "the keyboard reaches and works the header and the answers"
+  size 375x812
+  at "/read/fde-role"
+  clock data
+  type "skip" key "Tab"
+  expect focused "home"
+  type "home" key "Tab"
+  expect focused "toc-toggle"
+  type "toc-toggle" key "Enter"
+  clock settle
+  expect tree has "toc-panel"
+  type "answer-toggle-21" key "Enter"
+  clock settle
+  expect tree has "answer-21"

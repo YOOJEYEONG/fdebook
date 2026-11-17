@@ -1,0 +1,188 @@
+{
+  "ch1/acceptance.py": {
+    "ok": true,
+    "command": "python3 examples/ch1/acceptance.py",
+    "note": "",
+    "runs": 5
+  },
+  "ch2/http_basics.py": {
+    "ok": true,
+    "command": "python3 examples/ch2/http_basics.py",
+    "note": "",
+    "runs": 5
+  },
+  "ch2/errors_auth.py": {
+    "ok": true,
+    "command": "python3 examples/ch2/errors_auth.py",
+    "note": "",
+    "runs": 5
+  },
+  "ch2/pagination.py": {
+    "ok": true,
+    "command": "python3 examples/ch2/pagination.py",
+    "note": "",
+    "runs": 5
+  },
+  "ch2/retry_backoff.py": {
+    "ok": true,
+    "command": "python3 examples/ch2/retry_backoff.py",
+    "note": "",
+    "runs": 5
+  },
+  "ch2/idempotency.py": {
+    "ok": true,
+    "command": "python3 examples/ch2/idempotency.py",
+    "note": "",
+    "runs": 5
+  },
+  "ch2/webhook_verify.py": {
+    "ok": true,
+    "command": "python3 examples/ch2/webhook_verify.py",
+    "note": "",
+    "runs": 5
+  },
+  "ch3/joins.py": {
+    "ok": true,
+    "command": "python3 examples/ch3/joins.py",
+    "note": "",
+    "runs": 5
+  },
+  "ch3/transactions.py": {
+    "ok": true,
+    "command": "python3 examples/ch3/transactions.py",
+    "note": "",
+    "runs": 5
+  },
+  "ch3/cleaning.py": {
+    "ok": true,
+    "command": "python3 examples/ch3/cleaning.py",
+    "note": "",
+    "runs": 5
+  },
+  "ch3/etl.py": {
+    "ok": true,
+    "command": "python3 examples/ch3/etl.py",
+    "note": "",
+    "runs": 5
+  },
+  "ch3/privacy.py": {
+    "ok": true,
+    "command": "python3 examples/ch3/privacy.py",
+    "note": "",
+    "runs": 5
+  },
+  "ch4/tickets_api.py": {
+    "ok": true,
+    "command": "python3 examples/ch4/tickets_api.py",
+    "note": "",
+    "runs": 5
+  },
+  "ch4/test_tickets_api.py": {
+    "ok": true,
+    "command": "python3 examples/ch4/test_tickets_api.py",
+    "note": "",
+    "runs": 5
+  },
+  "ch4/config.py": {
+    "ok": true,
+    "command": "APP_ENV=staging DATABASE_URL=sqlite:///tmp/tickets.db API_TOKEN=example-not-a-real-token python3 examples/ch4/config.py",
+    "note": "",
+    "runs": 5
+  },
+  "ch4/rollout.py": {
+    "ok": true,
+    "command": "python3 examples/ch4/rollout.py",
+    "note": "",
+    "runs": 5
+  },
+  "ch5/observability.py": {
+    "ok": true,
+    "command": "python3 examples/ch5/observability.py",
+    "note": "",
+    "runs": 5
+  },
+  "ch5/reproduce.py": {
+    "ok": true,
+    "command": "python3 examples/ch5/reproduce.py",
+    "note": "",
+    "runs": 5
+  },
+  "ch5/performance.py": {
+    "ok": true,
+    "command": "python3 examples/ch5/performance.py",
+    "note": "",
+    "runs": 5
+  },
+  "ch5/error_budget.py": {
+    "ok": true,
+    "command": "python3 examples/ch5/error_budget.py",
+    "note": "",
+    "runs": 5
+  },
+  "ch5/authorization.py": {
+    "ok": true,
+    "command": "python3 examples/ch5/authorization.py",
+    "note": "",
+    "runs": 5
+  },
+  "ch6/structured_output.py": {
+    "ok": true,
+    "command": "python3 examples/ch6/structured_output.py",
+    "note": "",
+    "runs": 5
+  },
+  "ch6/tool_loop.py": {
+    "ok": true,
+    "command": "python3 examples/ch6/tool_loop.py",
+    "note": "",
+    "runs": 5
+  },
+  "ch6/retrieval.py": {
+    "ok": true,
+    "command": "python3 examples/ch6/retrieval.py",
+    "note": "",
+    "runs": 5
+  },
+  "ch6/evaluate.py": {
+    "ok": true,
+    "command": "python3 examples/ch6/evaluate.py",
+    "note": "",
+    "runs": 5
+  },
+  "ch6/injection_guard.py": {
+    "ok": true,
+    "command": "python3 examples/ch6/injection_guard.py",
+    "note": "",
+    "runs": 5
+  },
+  "ch6/cost_monitor.py": {
+    "ok": true,
+    "command": "python3 examples/ch6/cost_monitor.py",
+    "note": "",
+    "runs": 5
+  },
+  "ch7/impact_report.py": {
+    "ok": true,
+    "command": "python3 examples/ch7/impact_report.py",
+    "note": "",
+    "runs": 5
+  },
+  "capstone/data.py": {
+    "ok": true,
+    "command": "python3 examples/capstone/data.py",
+    "note": "",
+    "runs": 5
+  },
+  "capstone/demo.py": {
+    "ok": true,
+    "command": "python3 examples/capstone/demo.py",
+    "note": "",
+    "runs": 5
+  },
+  "capstone/evaluate.py": {
+    "ok": true,
+    "command": "python3 examples/capstone/evaluate.py",
+    "note": "",
+    "runs": 5
+  }
+}

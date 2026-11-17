@@ -1,0 +1,24 @@
+# 4.4 CI: 저장소의 .github/workflows/ci.yml에 두면 GitHub Actions가 푸시와 PR마다 실행한다.
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# 기본 권한은 읽기 전용으로 둔다. 쓰기가 필요한 잡에서만 올린다.
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      # 서드파티 액션은 태그가 아니라 커밋 SHA로 고정한다(태그는 옮겨질 수 있다). 주석은 그 SHA의 태그.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.13"
+      - name: 단위·통합 테스트
+        run: python -m unittest -v examples/ch4/test_tickets_api.py
+      - name: 컨테이너 이미지가 빌드되는지 확인
+        run: docker build -t tickets-api:${{ github.sha }} -f examples/ch4/Dockerfile examples/ch4

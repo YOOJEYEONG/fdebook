@@ -1,0 +1,20 @@
+== 로그: 한 줄에 JSON 하나, 사람이 아니라 기계가 검색한다
+{"level": "info", "request_id": "req-01", "route": "GET /tickets/{id}", "status": 200, "duration_ms": 15}
+{"level": "info", "request_id": "req-02", "route": "POST /tickets", "status": 201, "duration_ms": 116}
+{"level": "info", "request_id": "req-03", "route": "GET /tickets/{id}", "status": 404, "duration_ms": 12}
+{"level": "error", "request_id": "req-04", "route": "POST /tickets", "status": 502, "duration_ms": 3020, "error": "배송사 API 시간 초과(3000ms)"}
+{"level": "info", "request_id": "req-05", "route": "GET /tickets/{id}", "status": 200, "duration_ms": 14}
+{"level": "info", "request_id": "req-06", "route": "POST /tickets", "status": 201, "duration_ms": 134}
+== 메트릭: 경로·상태 분류별 요청 수
+  http_requests_total{route="GET /tickets/{id}", class="2xx"} 2
+  http_requests_total{route="GET /tickets/{id}", class="4xx"} 1
+  http_requests_total{route="POST /tickets", class="2xx"} 2
+  http_requests_total{route="POST /tickets", class="5xx"} 1
+  GET /tickets/{id} 지연(ms): 최소 12, 최대 15
+  POST /tickets 지연(ms): 최소 116, 최대 3020
+  5xx 오류율: 1/6 = 16.7%
+== 트레이스: 오류 로그의 request_id로 해당 요청의 경로를 연다
+  request_id: req-04
+  handle POST /tickets          3020ms ####################
+    db.query                        17ms
+    http POST shipping-api        3000ms ####################

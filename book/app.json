@@ -1,0 +1,24 @@
+{
+  "$schema": "../.cache-ext/exact/scripts/app.schema.json",
+  "name": "FDE 기술 학습북",
+  "short_name": "FDE 기술 학습북",
+  "id": "dev.local.fdebook",
+  "start_url": "/",
+  "display": "standalone",
+  "app": {
+    "id": "dev.local.fdebook",
+    "name": "FDE 기술 학습북"
+  },
+  "host": {
+    "web": {}
+  },
+  "deploy": {
+    "store": {
+      "web": "0"
+    }
+  },
+  "server": {
+    "database": false
+  },
+  "lang": "ko"
+}
